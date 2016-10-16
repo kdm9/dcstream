@@ -1,0 +1,9 @@
+.*.sw?
+*.o
+*.lo
+
+lib*.a
+lib*.la
+lib*.so*
+
+build/
