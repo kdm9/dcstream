@@ -27,4 +27,4 @@ src/%.lo: src/%.c src/%.h
 
 .PHONY: doc
 doc:
-	cldoc generate $(CFLAGS) -- --report --output html $(SOURCES) $(HEADERS)
+	cldoc generate $(CFLAGS) -- --language c --report --output html $(SOURCES) $(HEADERS)
