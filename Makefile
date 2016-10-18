@@ -28,8 +28,7 @@ test: run_tests
 
 .PHONY: clean
 clean:
-	rm -f *.o *.lo libdcstream.*
-
+	rm -f *.o *.lo libdcstream.* run_tests
 
 %.o: src/%.c src/%.h
 	$(CC) $(CFLAGS) -c -o $@ $<

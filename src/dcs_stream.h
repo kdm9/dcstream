@@ -7,7 +7,7 @@
 #include "dcs_compr.h"
 
 #ifndef DCS_BUFSIZE
-#define DCS_BUFSIZE (10<<20) // 10Mib
+#define DCS_BUFSIZE (1<<20) // 1Mib
 #endif
 
 typedef struct {
