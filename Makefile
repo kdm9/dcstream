@@ -1,10 +1,13 @@
-LIBS    = -lm -lz
-CFLAGS += -std=gnu11 -Wall -O3 -iquote src
+LIBS    = -lm $(shell pkg-config --libs libzstd zlib) -lbz2
+CFLAGS ?= -O3 -g -fsanitize=address
+CFLAGS += -std=gnu11 -Wall -iquote src
 
-SOURCES = $(wildcard src/*.c)
-HEADERS = $(wildcard src/*.h)
+SOURCES = dcs_compr.c dcs_stream.c
+HEADERS = $(patsubst %.c,%.h,$(SOURCES))
 LOBJS   = $(patsubst %.c,%.lo,$(SOURCES))
 OBJS    = $(patsubst %.c,%.o,$(SOURCES))
+
+all: libdcstream.a libdcstream.la libdcstream.so
 
 libdcstream.a: $(OBJS)
 	$(AR) rcs $@ $^
@@ -13,16 +16,27 @@ libdcstream.la: $(LOBJS)
 	$(AR) rcs $@ $^
 
 libdcstream.so: $(LOBJS)
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ $^ $(LIBS)
+
+
+run_tests: $(wildcard src/test/*.c) | libdcstream.so
+	$(CC) $(CFLAGS)  -o $@ $^ -L. -ldcstream -lcmocka  $(LIBS)
+
+.PHONY: test
+test: run_tests
+	@./run_tests
 
 .PHONY: clean
 clean:
-	rm -f src/*.o libdcstream.*
+	rm -f *.o *.lo libdcstream.*
 
 
-CFLAGS += -fPIC
-src/%.lo: src/%.c src/%.h
+%.o: src/%.c src/%.h
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+
+%.lo: src/%.c src/%.h
+	$(CC) $(CFLAGS) -fPIC -c -o $@ $<
 
 
 .PHONY: doc

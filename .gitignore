@@ -6,4 +6,6 @@ lib*.a
 lib*.la
 lib*.so*
 
+run_tests
+
 build/

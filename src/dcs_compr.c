@@ -1,3 +1,4 @@
+#include "dcs_util.h"
 #include "dcs_compr.h"
 
 #include "dcs_compr_plain.c"
@@ -81,5 +82,7 @@ int dcs_compr_close(dcs_compr *compr)
 {
     if (compr == NULL) return -1;
 
-    return compr->close(compr->ctx);
+    int res = compr->close(compr->ctx);
+    dcs_free(compr->ctx);
+    return res;
 }
