@@ -4,9 +4,10 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include "dcs_util.h"
+#include "dcs_compr.h"
 
 
-typedef struct {
+typedef struct dcs_buffer_s {
     // buffer content
     unsigned char *buf;
     // capacity of buffer
@@ -15,8 +16,9 @@ typedef struct {
     size_t len;
     // current position of cursor within buffer
     size_t pos;
+    // Last char obtained via getc
+    int prevous_getc;
 } dcs_buf;
-
 
 /* Allocates a buffer object
  * @capacity The buffer's capacity, in bytes
@@ -32,6 +34,20 @@ dcs_buf *dcs_buf_create(size_t capacity);
  * @return 0 on success, otherwise -1
  */
 int dcs_buf_init(dcs_buf *buf, size_t capacity);
+
+
+int dcs_buf_read(dcs_buf *buf, void *dest, size_t size);
+int dcs_buf_write(dcs_buf *buf, const void *src, size_t size);
+
+int dcs_buf_getc(dcs_buf *buf, unsigned char *chr);
+int dcs_buf_putc(dcs_buf *buf, unsigned char chr);
+
+int dcs_buf_getuntil(dcs_buf *buf, unsigned char *out, unsigned char end);
+int dcs_buf_puts(dcs_buf *buf, const char *str);
+
+int dcs_buf_flush(dcs_buf *buf);
+int dcs_buf_fill(dcs_buf *buf);
+
 
 /* Destroys internal members of a buffer object in-place
  * @buf A pointer to a buffer object
