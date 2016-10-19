@@ -1,4 +1,5 @@
 LIBS    = -lm $(shell pkg-config --libs libzstd zlib) -lbz2
+
 CFLAGS ?= -O3 -g -fsanitize=address
 CFLAGS += -std=gnu11 -Wall -iquote src
 
@@ -29,6 +30,7 @@ test: run_tests
 .PHONY: clean
 clean:
 	rm -f *.o *.lo libdcstream.* run_tests
+	rm -rf html
 
 %.o: src/%.c src/%.h
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -39,5 +41,5 @@ clean:
 
 
 .PHONY: doc
-doc:
-	cldoc generate $(CFLAGS) -- --language c --report --output html $(SOURCES) $(HEADERS)
+doc: $(addprefix src/,$(SOURCES) $(HEADERS))
+	cldoc generate $(CFLAGS) -- --language c --report --output html $^
