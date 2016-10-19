@@ -58,7 +58,7 @@ void test_stream_read(void **ctx)
             char *buf = malloc(length + 1);
             assert_non_null(buf);
             buf[length] = '\0';
-            assert_int_equal(dcs_read(stream, buf, length), 0);
+            assert_int_equal(dcs_read(stream, buf, length), length);
             assert_true(buf[length] == '\0');
             assert_int_equal(strlen(buf), length);
 
@@ -105,7 +105,7 @@ void test_stream_write(void **ctx)
                 buf[i] = '0' + (char)(i % 10);
             }
 
-            assert_int_equal(dcs_write(stream, buf, length), 0);
+            assert_int_equal(dcs_write(stream, buf, length), length);
 
             for (size_t i = 0; i < length; i++) {
                 assert_true(buf[i] == '0' + (char)(i % 10));

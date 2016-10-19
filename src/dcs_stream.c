@@ -146,7 +146,7 @@ int _dcs_close(dcs_stream *stream)
 *                               Read and Write                                *
 *******************************************************************************/
 
-int dcs_read(dcs_stream *stream, void *dest, size_t size)
+ssize_t dcs_read(dcs_stream *stream, void *dest, size_t size)
 {
     if (stream == NULL || dest == NULL || ! stream->read) return -1;
     
@@ -164,10 +164,10 @@ int dcs_read(dcs_stream *stream, void *dest, size_t size)
             }
         }
     }
-    return 0;
+    return read;
 }
 
-int dcs_write(dcs_stream *stream, const void *src, size_t size)
+ssize_t dcs_write(dcs_stream *stream, const void *src, size_t size)
 {
     if (stream == NULL || src == NULL || stream->read) return -1;
     
@@ -186,7 +186,7 @@ int dcs_write(dcs_stream *stream, const void *src, size_t size)
             }
         }
     }
-    return 0;
+    return wrote;
 }
 
 

@@ -32,7 +32,7 @@ typedef struct {
 
 /* Open @file in mode @mode
  *
- * @file Filename to open. 
+ * @file Filename to open.
  * @mode File mode. Must be "r" or "w". Any trailing characters ignored, but are
  *       passed directly to the underlying IO/compression library's `open`.
  * @algo Compression algo. When reading, pass DCS_UNKNOWN to guess compression
@@ -43,11 +43,11 @@ dcs_stream *dcs_open(const char *file, const char *mode, dcs_comp_algo algo);
 
 /* Open @file in mode @mode
  *
- * @file Filename to open. 
+ * @file Filename to open.
  * @mode File mode. Must be "r" or "w". Any trailing characters ignored, but are
  *       passed directly to the underlying IO/compression library's `open`.
  * @algo Compression algo. If DCS_UNKNOWN is given, no detection is attempted
- *       and DCS_PLAIN is assumed. 
+ *       and DCS_PLAIN is assumed.
  */
 dcs_stream *dcs_dopen(int fd, const char *mode, dcs_comp_algo algo);
 
@@ -57,8 +57,25 @@ int _dcs_close(dcs_stream *stream);
 #define dcs_close(st) ({int res=0; if (st != NULL){res = _dcs_close(st);} st = NULL; res;})
 
 
-int dcs_read(dcs_stream *stream, void *dest, size_t size);
-int dcs_write(dcs_stream *stream, const void *src, size_t size);
+/* Read @size bytes from @stream into @dest
+ *
+ * @stream Stream from which to read
+ * @dest Destination for content to be read
+ * @size Number of bytes to read.
+ *
+ * @return Number of items read, or -1 on error;
+ */
+ssize_t dcs_read(dcs_stream *stream, void *dest, size_t size);
+
+/* Write @size bytes from @src into @stream
+ *
+ * @stream Stream to be written to
+ * @src Source for content to be written
+ * @size Number of bytes to write.
+ *
+ * @return Number of items written, or -1 on error;
+ */
+ssize_t dcs_write(dcs_stream *stream, const void *src, size_t size);
 
 int dcs_getc(dcs_stream *stream);
 int dcs_putc(dcs_stream *stream, unsigned char chr);
@@ -67,10 +84,6 @@ ssize_t dcs_getuntil(dcs_stream *stream, unsigned char *out, unsigned char end, 
 int dcs_puts(dcs_stream *stream, const char *str);
 
 int dcs_flush(dcs_stream *stream);
-
-
-
-
 
 
 #endif /* end of include guard: DCS_STREAM_H_SXLTXFQZ */
