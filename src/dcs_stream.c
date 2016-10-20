@@ -3,9 +3,16 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <stdint.h>
 
 #include "dcs_util.h"
+#include "dcs_compr.h"
 #include "dcs_stream.h"
+
+#ifndef DCS_BUFSIZE
+#define DCS_BUFSIZE (1<<20) // 1Mib
+#endif
+
 
 /*******************************************************************************
 *                             Helper declarations                             *
@@ -23,7 +30,7 @@ static inline int
 _dcs_fillbuf(dcs_stream *stream)
 {
     if (stream == NULL || !stream->read) return -1;
-    int res = dcs_compr_read(&stream->compr, stream->buf, &stream->len, stream->cap);
+    int res = dcs_compr_read(stream->compr, stream->buf, &stream->len, stream->cap);
     if (stream->len < stream->cap) {
         stream->fp_eof = true;
     }
@@ -35,7 +42,7 @@ static inline int
 _dcs_writebuf(dcs_stream *stream)
 {
     if (stream == NULL) return -1;
-    int res = dcs_compr_write(&stream->compr, stream->buf, stream->len);
+    int res = dcs_compr_write(stream->compr, stream->buf, stream->len);
     stream->len = 0;
     stream->pos = 0;
     return res;
@@ -78,12 +85,14 @@ dcs_stream *dcs_open(const char *file, const char *mode, dcs_comp_algo algo)
 
     dcs_stream *stream = _dcs_init(mode);
 
-    int res = dcs_compr_open(&stream->compr, file, mode, algo);
-    if (res != 0) {
+    int res = 0;
+    dcs_compr *compr = dcs_compr_open(file, mode, algo);
+    if (compr == NULL) {
         dcs_free(stream->buf);
         dcs_free(stream);
         return NULL;
     }
+    stream->compr = compr;
     if (stream->read) {
         res = _dcs_fillbuf(stream);
         if (res != 0) {
@@ -109,12 +118,15 @@ dcs_stream *dcs_dopen(int fd, const char *mode, dcs_comp_algo algo)
 
     dcs_stream *stream = _dcs_init(mode);
 
-    int res = dcs_compr_dopen(&stream->compr, fd, mode, algo);
-    if (res != 0) {
+    int res = 0;
+    dcs_compr *compr = dcs_compr_dopen(fd, mode, algo);
+    if (compr == NULL) {
         dcs_free(stream->buf);
         dcs_free(stream);
         return NULL;
     }
+    stream->compr = compr;
+
     if (stream->read) {
         res = _dcs_fillbuf(stream);
         if (res != 0) {
@@ -134,7 +146,7 @@ int _dcs_close(dcs_stream *stream)
     if (stream->len > 0) {
         _dcs_writebuf(stream);
     }
-    int res = dcs_compr_close(&stream->compr);
+    int res = dcs_compr_close(stream->compr);
 
     dcs_free(stream->buf);
     dcs_free(stream);
@@ -152,9 +164,10 @@ ssize_t dcs_read(dcs_stream *stream, void *dest, size_t size)
     
     size_t read = 0;
     int res = 0;
+    uint8_t *bdest = dest;
     for (; read < size; ) {
         size_t tocpy = dcs_size_min(stream->len - stream->pos, size - read);
-        memcpy(dest + read, stream->buf + stream->pos, tocpy);
+        memcpy(bdest + read, stream->buf + stream->pos, tocpy);
         stream->pos += tocpy;
         read += tocpy;
         if (stream->pos == stream->len) {
@@ -173,9 +186,10 @@ ssize_t dcs_write(dcs_stream *stream, const void *src, size_t size)
     
     size_t wrote = 0;
     int res = 0;
+    const uint8_t *bsrc = src;
     for (; wrote < size; ) {
         size_t tocpy = dcs_size_min(stream->cap - stream->pos, size - wrote);
-        memcpy(stream->buf + stream->pos, src + wrote, tocpy);
+        memcpy(stream->buf + stream->pos, bsrc + wrote, tocpy);
         stream->pos += tocpy;
         stream->len = stream->pos;
         wrote += tocpy;

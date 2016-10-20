@@ -2,22 +2,8 @@
 #define DCS_COMPR_H_CRY3YU7D
 
 
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdbool.h>
+#include "dcs_stream.h"
 
-
-typedef enum {
-    DCS_UNKNOWN = 0,
-    // Uncompressed
-    DCS_PLAIN,
-    // Compressed using Zstandard version 1.0 or greater
-    DCS_ZSTD,
-    // Compressed using gzip, or the zlib library
-    DCS_GZIP,
-    // Compressed using bzip2, or the bzip2 library
-    DCS_BZIP2
-} dcs_comp_algo;
 
 typedef struct dcs_compr_s {
     void *ctx;
@@ -29,12 +15,15 @@ typedef struct dcs_compr_s {
     int (*close)(void *ctx);
 } dcs_compr;
 
-int dcs_compr_open(dcs_compr *compr, const char *file, const char *mode, dcs_comp_algo algo);
-int dcs_compr_dopen(dcs_compr *compr, const int fd, const char *mode, dcs_comp_algo algo);
+dcs_compr *dcs_compr_open(const char *file, const char *mode, dcs_comp_algo algo);
+dcs_compr *dcs_compr_dopen(const int fd, const char *mode, dcs_comp_algo algo);
 int dcs_compr_read(dcs_compr *compr, unsigned char *bytes, size_t *len, size_t cap);
 int dcs_compr_write(dcs_compr *compr, unsigned char *bytes, size_t len);
 int dcs_compr_flush(dcs_compr *compr);
-int dcs_compr_close(dcs_compr *compr);
+int _dcs_compr_close(dcs_compr *compr);
+#define dcs_compr_close(compr) ({int res=0;                \
+        if (compr != NULL){res = _dcs_compr_close(compr);} \
+        compr = NULL; res;})
 
 
 #endif /* end of include guard: DCS_COMPR_H_CRY3YU7D */

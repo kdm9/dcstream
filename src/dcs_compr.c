@@ -38,23 +38,27 @@ dcs_compr_init(dcs_compr *compr, dcs_comp_algo algo)
     return 0;
 }
 
-int dcs_compr_open(dcs_compr *compr, const char *file, const char *mode, dcs_comp_algo algo)
+dcs_compr *
+dcs_compr_open(const char *file, const char *mode, dcs_comp_algo algo)
 {
-    if (compr == NULL) return -1;
+    dcs_compr *compr = calloc(1, sizeof(*compr));
+    if (compr == NULL) return NULL;
 
-    if (dcs_compr_init(compr, algo) != 0) return -1;
-
-    return compr->open(compr->ctx, file, mode);
+    if (dcs_compr_init(compr, algo) != 0) return NULL;
+    if (compr->open(compr->ctx, file, mode) != 0) return NULL;
+    return compr;
 }
 
 
-int dcs_compr_dopen(dcs_compr *compr, const int fd, const char *mode, dcs_comp_algo algo)
+dcs_compr *
+dcs_compr_dopen(const int fd, const char *mode, dcs_comp_algo algo)
 {
-    if (compr == NULL) return -1;
+    dcs_compr *compr = calloc(1, sizeof(*compr));
+    if (compr == NULL) return NULL;
 
-    if (dcs_compr_init(compr, algo) != 0) return -1;
-
-    return compr->dopen(compr->ctx, fd, mode);
+    if (dcs_compr_init(compr, algo) != 0) return NULL;
+    if (compr->dopen(compr->ctx, fd, mode) != 0) return NULL;
+    return compr;
 }
 
 int dcs_compr_read(dcs_compr *compr, unsigned char *bytes, size_t *len, size_t cap)
@@ -78,11 +82,12 @@ int dcs_compr_flush(dcs_compr *compr)
     return compr->flush(compr->ctx);
 }
 
-int dcs_compr_close(dcs_compr *compr)
+int _dcs_compr_close(dcs_compr *compr)
 {
     if (compr == NULL) return -1;
 
     int res = compr->close(compr->ctx);
     dcs_free(compr->ctx);
+    dcs_free(compr);
     return res;
 }

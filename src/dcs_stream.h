@@ -4,11 +4,21 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stddef.h>
-#include "dcs_compr.h"
 
-#ifndef DCS_BUFSIZE
-#define DCS_BUFSIZE (1<<20) // 1Mib
-#endif
+typedef struct dcs_compr_s dcs_compr;
+
+typedef enum dcs_comp_algo_e{
+    DCS_UNKNOWN = 0,
+    // Uncompressed
+    DCS_PLAIN,
+    // Compressed using Zstandard version 1.0 or greater
+    DCS_ZSTD,
+    // Compressed using gzip, or the zlib library
+    DCS_GZIP,
+    // Compressed using bzip2, or the bzip2 library
+    DCS_BZIP2
+} dcs_comp_algo;
+
 
 typedef struct {
     // buffer content
@@ -26,7 +36,7 @@ typedef struct {
     // File is reading. False for writing;
     bool read;
     // Compressed source/sink
-    dcs_compr compr;
+    dcs_compr *compr;
 } dcs_stream;
 
 
