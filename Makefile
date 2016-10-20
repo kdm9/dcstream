@@ -2,7 +2,7 @@ prefix := /usr/local
 PREFIX := $(prefix)
 
 ifdef DEBUG
-CFLAGS ?= -g -fsanitise=address
+CFLAGS ?= -g -fsanitize=address
 else
 CFLAGS ?= -O3
 endif
