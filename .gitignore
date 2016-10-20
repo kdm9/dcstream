@@ -1,6 +1,7 @@
 .*.sw?
 *.o
 *.lo
+*.pc
 
 lib*.a
 lib*.la

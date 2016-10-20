@@ -1,0 +1,10 @@
+prefix=@PREFIX@
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: dcstream
+Description: De/Compression Streams in C
+URL: https://github.com/kdmurray91/dcstream
+Version: 0.1.0
+Libs: -L${libdir} -ldcstream
+Cflags: -I${prefix}/include
