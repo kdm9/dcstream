@@ -4,7 +4,6 @@
 
 #include "dcs_stream.h"
 
-
 typedef struct dcs_compr_s {
     void *ctx;
     int (*open)(void *ctx, const char *file, const char *mode);

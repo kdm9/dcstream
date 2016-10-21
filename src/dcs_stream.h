@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 
+
 typedef struct dcs_compr_s dcs_compr;
 
 typedef enum dcs_comp_algo_e{
@@ -88,12 +89,20 @@ ssize_t dcs_read(dcs_stream *stream, void *dest, size_t size);
 ssize_t dcs_write(dcs_stream *stream, const void *src, size_t size);
 
 int dcs_getc(dcs_stream *stream);
-int dcs_putc(dcs_stream *stream, unsigned char chr);
+int dcs_ungetc(dcs_stream *stream);
 
 ssize_t dcs_getuntil(dcs_stream *stream, unsigned char *out, unsigned char end, size_t cap);
 int dcs_puts(dcs_stream *stream, const char *str);
 
 int dcs_flush(dcs_stream *stream);
+
+inline int
+dcs_eof(dcs_stream *stream)
+{
+    if (stream == NULL || ! stream->read) return -1;
+    if (stream->fp_eof && stream->pos == stream->len) return 1;
+    else return 0;
+}
 
 
 #endif /* end of include guard: DCS_STREAM_H_SXLTXFQZ */

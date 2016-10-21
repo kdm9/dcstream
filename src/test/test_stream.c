@@ -6,6 +6,7 @@
 #include <cmocka.h>
 
 #include "dcs_util.h"
+#include "dcs_compr.h"
 #include "dcs_stream.h"
 
 static const char filename[] = "/dev/shm/test.dat";
@@ -49,7 +50,8 @@ void test_stream_read(void **ctx)
             assert_int_equal(mktestdat(length), 0);
 
             dcs_stream *stream = dcs_open(filename, "r", algo);
-            assert_non_null(stream->compr.ctx);
+            assert_non_null(stream->compr);
+            assert_non_null(stream->compr->ctx);
             assert_true(stream->read);
             assert_int_equal(stream->cap, DCS_BUFSIZE);
             assert_int_equal(stream->pos, 0);
@@ -59,6 +61,7 @@ void test_stream_read(void **ctx)
             assert_non_null(buf);
             buf[length] = '\0';
             assert_int_equal(dcs_read(stream, buf, length), length);
+            assert_int_equal(dcs_eof(stream), 1);
             assert_true(buf[length] == '\0');
             assert_int_equal(strlen(buf), length);
 
@@ -70,6 +73,32 @@ void test_stream_read(void **ctx)
             free(buf);
         }
     }
+}
+
+void test_stream_bad_read(void **ctx)
+{
+    const size_t length = 100;
+
+    char *buf = malloc(length + 1);
+    assert_non_null(buf);
+    buf[length] = '\0';
+
+    // Read on write file
+    dcs_stream *stream = dcs_open(filename, "w", DCS_PLAIN);
+    assert_false(stream->read);
+    assert_int_equal(dcs_read(stream, buf, length), -1);
+    assert_int_equal(dcs_close(stream), 0);
+
+    // Read longer than the file length
+    assert_int_equal(mktestdat(length * 1.5), 0);
+    stream = dcs_open(filename, "r", DCS_PLAIN);
+    assert_int_equal(dcs_read(stream, buf, length), length);
+    assert_int_equal(dcs_eof(stream), 0);
+    assert_int_equal(dcs_read(stream, buf, length), length * 0.5);
+    assert_int_equal(dcs_eof(stream), 1);
+    assert_int_equal(dcs_close(stream), 0);
+
+    free(buf);
 }
 
 
@@ -92,7 +121,8 @@ void test_stream_write(void **ctx)
             assert_int_equal(mktestdat(length), 0);
 
             dcs_stream *stream = dcs_open(filename, "w", algo);
-            assert_non_null(stream->compr.ctx);
+            assert_non_null(stream->compr);
+            assert_non_null(stream->compr->ctx);
             assert_false(stream->read);
             assert_int_equal(stream->cap, DCS_BUFSIZE);
             assert_int_equal(stream->pos, 0);

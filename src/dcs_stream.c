@@ -9,10 +9,6 @@
 #include "dcs_compr.h"
 #include "dcs_stream.h"
 
-#ifndef DCS_BUFSIZE
-#define DCS_BUFSIZE (1<<20) // 1Mib
-#endif
-
 
 /*******************************************************************************
 *                             Helper declarations                             *
@@ -35,6 +31,7 @@ _dcs_fillbuf(dcs_stream *stream)
         stream->fp_eof = true;
     }
     stream->pos = 0;
+    stream->prevous_getc = -1; // ungetc now impossible
     return res;
 }
 
@@ -106,11 +103,11 @@ dcs_stream *dcs_open(const char *file, const char *mode, dcs_comp_algo algo)
 
 /* Open @file in mode @mode
  *
- * @file Filename to open. 
+ * @file Filename to open.
  * @mode File mode. Must be "r" or "w". Any trailing characters ignored, but are
  *       passed directly to the underlying IO/compression library's `open`.
  * @algo Compression algo. If DCS_UNKNOWN is given, no detection is attempted
- *       and DCS_PLAIN is assumed. 
+ *       and DCS_PLAIN is assumed.
  */
 dcs_stream *dcs_dopen(int fd, const char *mode, dcs_comp_algo algo)
 {
@@ -161,11 +158,11 @@ int _dcs_close(dcs_stream *stream)
 ssize_t dcs_read(dcs_stream *stream, void *dest, size_t size)
 {
     if (stream == NULL || dest == NULL || ! stream->read) return -1;
-    
+
     size_t read = 0;
     int res = 0;
     uint8_t *bdest = dest;
-    for (; read < size; ) {
+    for (; read < size && stream->pos != stream->len; ) {
         size_t tocpy = dcs_size_min(stream->len - stream->pos, size - read);
         memcpy(bdest + read, stream->buf + stream->pos, tocpy);
         stream->pos += tocpy;
@@ -177,13 +174,14 @@ ssize_t dcs_read(dcs_stream *stream, void *dest, size_t size)
             }
         }
     }
+    stream->prevous_getc = -1;
     return read;
 }
 
 ssize_t dcs_write(dcs_stream *stream, const void *src, size_t size)
 {
     if (stream == NULL || src == NULL || stream->read) return -1;
-    
+
     size_t wrote = 0;
     int res = 0;
     const uint8_t *bsrc = src;

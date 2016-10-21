@@ -11,10 +11,12 @@
 
 extern void test_stream_write(void **ctx);
 extern void test_stream_read(void **ctx);
+extern void test_stream_bad_read(void **ctx);
 extern int remove_testfile(void **ctx);
 const struct CMUnitTest suite_stream[] = {
     cmocka_unit_test_teardown(test_stream_read, remove_testfile),
     cmocka_unit_test_teardown(test_stream_write, remove_testfile),
+    cmocka_unit_test_teardown(test_stream_bad_read, remove_testfile),
 };
 
 
