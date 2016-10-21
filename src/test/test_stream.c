@@ -146,3 +146,48 @@ void test_stream_write(void **ctx)
         }
     }
 }
+
+void test_stream_getc_ungetc(void **ctx)
+{
+    const size_t length = 10;
+    dcs_stream *stream;
+
+    assert_int_equal(mktestdat(length), 0);
+    stream = dcs_open(filename, "r", DCS_PLAIN);
+    assert_non_null(stream);
+
+    assert_int_equal(stream->prevous_getc, -1);
+    for (size_t i = 0; i < length; i++) {
+        int expect = '0' + (char)(i % 10);
+        
+        // getc, check result
+        assert_int_equal(dcs_getc(stream), expect);
+        assert_int_equal(stream->pos, i + 1);
+        assert_int_equal(stream->prevous_getc, expect);
+
+        // Ungetc, should reset state
+        assert_int_equal(dcs_ungetc(stream), 0);
+        assert_int_equal(stream->pos, i);
+        assert_int_equal(stream->prevous_getc, -1);
+
+        // Ungetc, should fail
+        assert_int_equal(dcs_ungetc(stream), -1);
+        assert_int_equal(stream->pos, i);
+
+        // re-get c to advance
+        assert_int_equal(dcs_getc(stream), expect);
+        assert_int_equal(stream->pos, i + 1);
+    }
+    // Read should fail, without advancing
+    assert_int_equal(stream->pos, stream->len);
+    assert_int_equal(dcs_getc(stream), -1);
+    assert_int_equal(stream->pos, stream->len);
+}
+
+
+const struct CMUnitTest suite_stream[] = {
+    cmocka_unit_test_teardown(test_stream_read, remove_testfile),
+    cmocka_unit_test_teardown(test_stream_write, remove_testfile),
+    cmocka_unit_test_teardown(test_stream_bad_read, remove_testfile),
+    cmocka_unit_test_teardown(test_stream_getc_ungetc, remove_testfile),
+};

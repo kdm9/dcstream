@@ -31,8 +31,8 @@ libdcstream.so.$(SOVERSION): $(LOBJS)
 libdcstream.so: libdcstream.so.$(SOVERSION)
 	ln -sf $< $@
 
-run_tests: $(wildcard src/test/*.c) | libdcstream.so
-	$(CC) $(CFLAGS)  -o $@ $^ -L. -ldcstream -lcmocka  $(LIBS)
+run_tests: src/test/main.c $(wildcard src/test/test_*.c) | libdcstream.so
+	$(CC) $(CFLAGS)  -o $@ $< -L. -ldcstream -lcmocka  $(LIBS)
 
 .PHONY: test
 test: run_tests

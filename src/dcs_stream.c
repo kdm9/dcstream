@@ -202,6 +202,33 @@ ssize_t dcs_write(dcs_stream *stream, const void *src, size_t size)
 }
 
 
+int dcs_getc(dcs_stream *stream)
+{
+    if (stream == NULL || !stream->read) return -1;
+    if (stream->pos == stream->len) {
+        // refill buffer if empty
+        if (_dcs_fillbuf(stream) != 0) return -1;
+    }
+    if (stream->pos < stream->len) {
+        int chr = stream->buf[stream->pos++];
+        stream->prevous_getc = chr;
+        return chr;
+    }
+    return -1;
+}
+
+int dcs_ungetc(dcs_stream *stream)
+{
+    if (stream == NULL || !stream->read) return -1;
+    if (stream->prevous_getc < 0) return -1;
+    if (stream->buf[stream->pos - 1] == stream->prevous_getc) {
+        stream->pos--;
+        stream->prevous_getc = -1;
+        return 0;
+    }
+    return -1;
+}
+
 
 /*******************************************************************************
 *                                   Helpers                                   *
