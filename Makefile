@@ -2,7 +2,7 @@ prefix := /usr/local
 PREFIX := $(prefix)
 
 ifdef DEBUG
-CFLAGS ?= -g -fsanitize=address
+CFLAGS ?= -g -fsanitize=address -Wpedantic
 else
 CFLAGS ?= -O3
 endif
@@ -29,7 +29,7 @@ libdcstream.so.$(SOVERSION): $(LOBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ $^ $(LIBS)
 
 libdcstream.so: libdcstream.so.$(SOVERSION)
-	ln -s $< $@
+	ln -sf $< $@
 
 run_tests: $(wildcard src/test/*.c) | libdcstream.so
 	$(CC) $(CFLAGS)  -o $@ $^ -L. -ldcstream -lcmocka  $(LIBS)
