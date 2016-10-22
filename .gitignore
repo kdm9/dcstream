@@ -9,4 +9,7 @@ lib*.so*
 
 run_tests
 
-html/
+docs/html/
+html_cov/
+*.gcno
+*.gcda
