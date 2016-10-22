@@ -82,7 +82,6 @@ dcs_stream *dcs_open(const char *file, const char *mode, dcs_comp_algo algo)
 
     dcs_stream *stream = _dcs_init(mode);
 
-    int res = 0;
     dcs_compr *compr = dcs_compr_open(file, mode, algo);
     if (compr == NULL) {
         dcs_free(stream->buf);
@@ -90,13 +89,6 @@ dcs_stream *dcs_open(const char *file, const char *mode, dcs_comp_algo algo)
         return NULL;
     }
     stream->compr = compr;
-    if (stream->read) {
-        res = _dcs_fillbuf(stream);
-        if (res != 0) {
-            dcs_close(stream);
-            return NULL;
-        }
-    }
     return stream;
 }
 
@@ -115,7 +107,6 @@ dcs_stream *dcs_dopen(int fd, const char *mode, dcs_comp_algo algo)
 
     dcs_stream *stream = _dcs_init(mode);
 
-    int res = 0;
     dcs_compr *compr = dcs_compr_dopen(fd, mode, algo);
     if (compr == NULL) {
         dcs_free(stream->buf);
@@ -124,13 +115,6 @@ dcs_stream *dcs_dopen(int fd, const char *mode, dcs_comp_algo algo)
     }
     stream->compr = compr;
 
-    if (stream->read) {
-        res = _dcs_fillbuf(stream);
-        if (res != 0) {
-            dcs_close(stream);
-            return NULL;
-        }
-    }
     return stream;
 }
 
@@ -150,6 +134,22 @@ int _dcs_close(dcs_stream *stream)
     return res;
 }
 
+int dcs_setbufsize(dcs_stream *stream, size_t size)
+{
+    if (stream == NULL || size == 0) return -1;
+
+    // If buffer has been filled, exit
+    if (stream->pos != 0 || stream->len != 0 || stream->fp_eof) return -1;
+
+    unsigned char *newbuf = calloc(1, size);
+    if (newbuf == NULL) return -1;
+
+    dcs_free(stream->buf);
+    stream->buf = newbuf;
+    stream->cap = size;
+
+    return 0;
+}
 
 /*******************************************************************************
 *                               Read and Write                                *
@@ -160,18 +160,17 @@ ssize_t dcs_read(dcs_stream *stream, void *dest, size_t size)
     if (stream == NULL || dest == NULL || ! stream->read) return -1;
 
     size_t read = 0;
-    int res = 0;
     uint8_t *bdest = dest;
-    for (; read < size && stream->pos != stream->len; ) {
+    if (stream->pos == stream->len) {
+        if (_dcs_fillbuf(stream) != 0) return -1;
+    }
+    for (;read < size && stream->pos != stream->len;) {
         size_t tocpy = dcs_size_min(stream->len - stream->pos, size - read);
         memcpy(bdest + read, stream->buf + stream->pos, tocpy);
         stream->pos += tocpy;
         read += tocpy;
         if (stream->pos == stream->len) {
-            res = _dcs_fillbuf(stream);
-            if (res != 0) {
-                return -1;
-            }
+            if (_dcs_fillbuf(stream) != 0) return -1;
         }
     }
     stream->prevous_getc = -1;

@@ -62,10 +62,23 @@ dcs_stream *dcs_open(const char *file, const char *mode, dcs_comp_algo algo);
  */
 dcs_stream *dcs_dopen(int fd, const char *mode, dcs_comp_algo algo);
 
-/* Close @dcs, destroying all data strucutres
+/* Close `stream`, destroying all data strucutres
  */
 int _dcs_close(dcs_stream *stream);
 #define dcs_close(st) ({int res=0; if (st != NULL){res = _dcs_close(st);} st = NULL; res;})
+
+/* Sets the buffer size of `stream` to `size`.
+ *
+ * @stream Open stream whose buffer should be resized.
+ * @size New buffer size
+ *
+ * @return 0 on success, or -1 on error. Existing buffers are preserved if
+ *         resizing fails
+ *
+ * **Note:** This function must be called immediately after `open`, before the
+ * buffer has been filled.
+ */
+int dcs_setbufsize(dcs_stream *stream, size_t size);
 
 
 /* Read @size bytes from @stream into @dest

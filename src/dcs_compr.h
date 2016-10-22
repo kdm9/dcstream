@@ -4,7 +4,7 @@
 
 #include "dcs_stream.h"
 
-typedef struct dcs_compr_s {
+struct dcs_compr_s {
     void *ctx;
     int (*open)(void *ctx, const char *file, const char *mode);
     int (*dopen)(void *ctx, const int fd, const char *mode);
@@ -12,7 +12,7 @@ typedef struct dcs_compr_s {
     int (*write)(void *ctx, unsigned char *bytes, size_t len);
     int (*flush)(void *ctx);
     int (*close)(void *ctx);
-} dcs_compr;
+};
 
 dcs_compr *dcs_compr_open(const char *file, const char *mode, dcs_comp_algo algo);
 dcs_compr *dcs_compr_dopen(const int fd, const char *mode, dcs_comp_algo algo);
