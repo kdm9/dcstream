@@ -161,17 +161,14 @@ ssize_t dcs_read(dcs_stream *stream, void *dest, size_t size)
 
     size_t read = 0;
     uint8_t *bdest = dest;
-    if (stream->pos == stream->len) {
-        if (_dcs_fillbuf(stream) != 0) return -1;
-    }
-    for (;read < size && stream->pos != stream->len;) {
+    while (read < size && ! dcs_eof(stream)) {
+        if (stream->pos == stream->len) {
+            if (_dcs_fillbuf(stream) != 0) return -1;
+        }
         size_t tocpy = dcs_size_min(stream->len - stream->pos, size - read);
         memcpy(bdest + read, stream->buf + stream->pos, tocpy);
         stream->pos += tocpy;
         read += tocpy;
-        if (stream->pos == stream->len) {
-            if (_dcs_fillbuf(stream) != 0) return -1;
-        }
     }
     stream->prevous_getc = -1;
     return read;

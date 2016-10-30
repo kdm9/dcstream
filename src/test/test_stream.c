@@ -107,10 +107,13 @@ void test_stream_readwrite_roundtrip(void **ctx)
             assert_non_null(stream->buf);
 
             assert_int_equal(dcs_read(stream, roundtrip, length), length);
-            assert_int_equal(dcs_eof(stream), 1);
             assert_true(roundtrip[length] == '\0');
             assert_int_equal(strlen(roundtrip), length);
             assert_string_equal(roundtrip, orig);
+
+            // Try reading again, should fail & set eof
+            assert_int_equal(dcs_read(stream, roundtrip, length), 0);
+            assert_int_equal(dcs_eof(stream), 1);
 
             assert_int_equal(dcs_close(stream), 0);
             assert_null(stream);
