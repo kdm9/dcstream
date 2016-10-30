@@ -13,3 +13,6 @@ docs/html/
 html_cov/
 *.gcno
 *.gcda
+
+# Ctags file
+tags
