@@ -4,7 +4,7 @@
 #include "dcs_compr_plain.c"
 #include "dcs_compr_zlib.c"
 
-inline int
+static inline int
 dcs_compr_init(dcs_compr *compr, dcs_comp_algo algo)
 {
     if (compr == NULL) return -1;
@@ -35,6 +35,7 @@ dcs_compr_init(dcs_compr *compr, dcs_comp_algo algo)
         default:
             return -1;
     }
+    compr->algo = algo;
     return 0;
 }
 

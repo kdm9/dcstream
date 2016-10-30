@@ -14,8 +14,8 @@
 *                             Helper declarations                             *
 *******************************************************************************/
 
-static int dcs_fileext(const char *filename, char *extbuf, size_t extbuflen);
-static dcs_comp_algo dcs_guess_compression_type(const char *filename);
+int dcs_fileext(const char *filename, char *extbuf, size_t extbuflen);
+dcs_comp_algo dcs_guess_compression_type(const char *filename);
 
 
 /*******************************************************************************
@@ -233,7 +233,7 @@ int dcs_ungetc(dcs_stream *stream)
 *                                   Helpers                                   *
 *******************************************************************************/
 
-static int
+int
 dcs_fileext(const char *filename, char *extbuf, size_t extbuflen)
 {
     if (filename == NULL || extbuf == NULL || extbuflen == 0) return -1;
@@ -248,7 +248,7 @@ dcs_fileext(const char *filename, char *extbuf, size_t extbuflen)
     return 0;
 }
 
-static dcs_comp_algo
+dcs_comp_algo
 dcs_guess_compression_type(const char *filename)
 {
     int res = 0;
@@ -261,22 +261,22 @@ dcs_guess_compression_type(const char *filename)
     // Stat file
     struct stat statres;
     res = stat(filename, &statres);
-    if (res != 0) return res;
+    if (res == 0) {
+        // What, someone gave us a directory?
+        if (S_ISDIR(statres.st_mode)) {
+            return DCS_UNKNOWN;
+        }
 
-    // What, someone gave us a directory?
-    if (S_ISDIR(statres.st_mode)) {
-        return DCS_UNKNOWN;
-    }
-
-    // If file is a stream or socket, we only support plain IO
-    if (S_ISFIFO(statres.st_mode) || S_ISSOCK(statres.st_mode)) {
-        return DCS_PLAIN;
+        // If file is a stream or socket, we only support plain IO
+        if (S_ISFIFO(statres.st_mode) || S_ISSOCK(statres.st_mode)) {
+            return DCS_PLAIN;
+        }
     }
 
     // Get the file extension
     char extbuf[4096] = "";
     res = dcs_fileext(filename, extbuf, 4096);
-    if (res != 0) return -1;
+    if (res != 0) return DCS_UNKNOWN;
 
     // Guess the file type from the extension. Yes, I'm that lazy right now.
     if (strcmp(extbuf, ".gz") == 0) {

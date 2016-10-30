@@ -67,6 +67,7 @@ void test_stream_readwrite_roundtrip(void **ctx)
             ***********/
             // Open stream, check struct members initialised
             dcs_stream *stream = dcs_open(filename, "w", algo);
+            assert_non_null(stream);
             assert_non_null(stream->compr);
             assert_non_null(stream->compr->ctx);
             assert_non_null(stream->buf);
@@ -184,8 +185,32 @@ void test_stream_getc_ungetc(void **ctx)
 }
 
 
+dcs_comp_algo dcs_guess_compression_type(const char *filename);
+void test_stream_guess_algo(void **ctx)
+{
+    const char *files[] = {
+        "file.txt", "file.txt.gz", ".hidden", "path/to/file.txt",
+        "path/to/file.gz", "file.zst", "file.bz2", "file."
+    };
+    const dcs_comp_algo algos[] = {
+        DCS_PLAIN, DCS_GZIP, DCS_PLAIN, DCS_PLAIN, DCS_GZIP,
+        DCS_ZSTD, DCS_BZIP2, DCS_PLAIN
+    };
+    const size_t nfiles = sizeof(files) / sizeof(*files);
+    assert_int_equal(sizeof(algos) / sizeof(*algos), nfiles);
+
+    for (size_t fileidx = 0; fileidx < nfiles; fileidx++) {
+        const char * file = files[fileidx];
+        const dcs_comp_algo expect = algos[fileidx];
+
+        dcs_comp_algo got = dcs_guess_compression_type(file);
+        assert_int_equal(got, expect);
+    }
+}
+
 const struct CMUnitTest suite_stream[] = {
     cmocka_unit_test_teardown(test_stream_readwrite_roundtrip, remove_testfile),
     cmocka_unit_test_teardown(test_stream_bad_read, remove_testfile),
     cmocka_unit_test_teardown(test_stream_getc_ungetc, remove_testfile),
+    cmocka_unit_test(test_stream_guess_algo),
 };

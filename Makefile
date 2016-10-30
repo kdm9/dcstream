@@ -33,7 +33,7 @@ libdcstream.so: libdcstream.so.$(SOVERSION)
 	ln -sf $< $@
 
 run_tests: src/test/main.c $(SRCS) $(wildcard src/test/test_*.c)
-	$(CC) $(CFLAGS) --coverage  -o $@ $(SRCS) $< -lcmocka  $(LIBS)
+	$(CC) $(CFLAGS) --coverage  -o $@ $< $(SRCS) -lcmocka  $(LIBS)
 
 .PHONY: test
 test: run_tests
@@ -43,11 +43,11 @@ HTML_COVER_DIR=html_cov
 .PHONY: testcov
 testcov: run_tests
 	test -d "$(HTML_COVER_DIR)" || mkdir -p "$(HTML_COVER_DIR)"
-	lcov --rc lcov_branch_coverage=1 --directory . --zerocounters
+	lcov --directory . --zerocounters
 	./run_tests
-	lcov --capture --rc lcov_branch_coverage=1 --no-external --directory . \
+	lcov --capture --no-external --directory . \
 		--base-directory src --output-file "$(HTML_COVER_DIR)/lcov.tmp"
-	lcov --remove "$(HTML_COVER_DIR)/lcov.tmp" --rc lcov_branch_coverage=1 \
+	lcov --remove "$(HTML_COVER_DIR)/lcov.tmp" \
 		'test/*' '/usr/*' --output-file "$(HTML_COVER_DIR)/lcov.info"
 	genhtml --branch-coverage -o "$(HTML_COVER_DIR)" "$(HTML_COVER_DIR)/lcov.info"
 

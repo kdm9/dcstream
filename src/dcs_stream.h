@@ -104,12 +104,15 @@ ssize_t dcs_write(dcs_stream *stream, const void *src, size_t size);
 int dcs_getc(dcs_stream *stream);
 int dcs_ungetc(dcs_stream *stream);
 
-ssize_t dcs_getuntil(dcs_stream *stream, unsigned char *out, unsigned char end, size_t cap);
-int dcs_puts(dcs_stream *stream, const char *str);
+ssize_t dcs_getuntil(dcs_stream *stream, unsigned char *dest, size_t size, unsigned char delim);
+ssize_t dcs_puts(dcs_stream *stream, const char *str);
 
 int dcs_flush(dcs_stream *stream);
 
-inline int
+dcs_comp_algo
+dcs_guess_compression_type(const char *filename);
+
+static inline int
 dcs_eof(dcs_stream *stream)
 {
     if (stream == NULL || ! stream->read) return -1;
