@@ -241,7 +241,7 @@ dcs_getuntil(dcs_stream *stream, char **dest, size_t *size, char delim)
         }
 
         // Find delimiter, or end of buffer
-        const char *buffer_start = stream->buf + stream->pos;
+        const char *buffer_start = (char *)stream->buf + stream->pos;
         const size_t buffer_len = stream->len - stream->pos;
         const char *delim_pos = memchr(buffer_start, delim, buffer_len);
         size_t bytes_to_delim = 0;
