@@ -3,6 +3,11 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <setjmp.h>
+#include <error.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include <cmocka.h>
 
 #include "dcs_util.h"
@@ -251,35 +256,42 @@ void test_stream_getuntil_bigline(void **ctx)
     ssize_t res = 0;
     const unsigned char delim = '\n';
 
-    size_t bufsize = TESTING_BUFSIZE * 2;
+    size_t bufsize = TESTING_BUFSIZE * 2 + TESTING_BUFSIZE - 1;
     char *buf = calloc(1, bufsize + 1);
     char *expect = calloc(1, bufsize + 1);
     assert_non_null(buf);
     assert_non_null(expect);
 
-    // Make expect contain one massive line
-    for (size_t i = 0; i < bufsize - 2; i++) {
-        expect[i] = '0' + i % 10;
-        expect[i+1] = '\n';
-    }
-
-    // Write test file
     FILE *fp = fopen(filename, "w");
     assert_non_null(fp);
-    fputs(expect, fp);
+
+    for (size_t i = 0; i < bufsize - 2; i++) {
+        // Extend the string
+        expect[i] = '0' + i % 10;
+        expect[i+1] = '\n';
+
+        // Write test file
+        fflush(fp);
+        truncate(filename, 0);
+        rewind(fp);
+        assert_true(fputs(expect, fp) > 0);
+        fflush(fp);
+
+        stream = dcs_open(filename, "r", DCS_PLAIN);
+        assert_non_null(stream);
+        dcs_setbufsize(stream, TESTING_BUFSIZE);
+
+        res = dcs_getuntil(stream, &buf, &bufsize, delim);
+        assert_int_equal(res, strlen(expect));
+        assert_string_equal(buf, expect);
+
+        // Check that realloc etc worked sensibly
+        assert_non_null(buf);
+        assert_true(bufsize >= TESTING_BUFSIZE * 2);
+        assert_int_equal(buf[res-1], delim);
+        assert_int_equal(buf[res], 0);
+    }
     fclose(fp);
-
-    stream = dcs_open(filename, "r", DCS_PLAIN);
-    assert_non_null(stream);
-    dcs_setbufsize(stream, TESTING_BUFSIZE);
-
-    res = dcs_getuntil(stream, &buf, &bufsize, delim);
-    assert_int_equal(res, strlen(expect));
-    assert_string_equal(buf, expect);
-    assert_non_null(buf);
-    assert_true(bufsize >= TESTING_BUFSIZE * 2);
-    assert_int_equal(buf[res-1], delim);
-    assert_int_equal(buf[res], 0);
 
     free(buf);
     free(expect);
