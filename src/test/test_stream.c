@@ -11,7 +11,8 @@
 
 #define TESTING_BUFSIZE (1<<10) // 1KiB
 
-static char filename[4096] = "/dev/shm/test.dat";
+static const char filename[4096] = "/dev/shm/test.dat";
+static const char textline[100] = "A line of text %zu\n";
 
 int
 mktestdat(size_t len)
@@ -21,6 +22,19 @@ mktestdat(size_t len)
 
     for (size_t i = 0; i < len; i++) {
         fprintf(fp, "%zu", i % 10);
+    }
+    fclose(fp);
+    return 0;
+}
+
+int
+mktesttext(size_t lines)
+{
+    FILE *fp = fopen(filename, "w");
+    if (fp == NULL) return -1;
+
+    for (size_t i = 0; i < lines; i++) {
+        fprintf(fp, textline, i % 10);
     }
     fclose(fp);
     return 0;
@@ -187,6 +201,49 @@ void test_stream_getc_ungetc(void **ctx)
     assert_int_equal(stream->pos, stream->len);
 }
 
+void test_stream_getuntil(void **ctx)
+{
+    dcs_stream *stream;
+    ssize_t res = 0;
+    const size_t numlines = 5;
+    const unsigned char delim = '\n';
+
+    size_t bufsize = TESTING_BUFSIZE;
+    char *buf = calloc(1, bufsize + 1);
+    char *expect = calloc(1, bufsize + 1);
+    assert_non_null(buf);
+    assert_non_null(expect);
+
+    res = mktesttext(numlines);
+    assert_int_equal(res, 0);
+
+    stream = dcs_open(filename, "r", DCS_PLAIN);
+    assert_non_null(stream);
+    dcs_setbufsize(stream, TESTING_BUFSIZE);
+
+    for (size_t l = 0; l < numlines; l++) {
+        snprintf(expect, bufsize, textline, l % 10);
+        res = dcs_getuntil(stream, &buf, &bufsize, delim);
+        assert_string_equal(buf, expect);
+        assert_int_equal(res, strlen(expect));
+        assert_non_null(buf);
+        assert_true(bufsize >= TESTING_BUFSIZE);
+        assert_int_equal(buf[res-1], delim);
+        assert_int_equal(buf[res], 0);
+    }
+    res = dcs_getuntil(stream, &buf, &bufsize, delim);
+    assert_int_equal(res, 0);
+    assert_int_equal(dcs_eof(stream), 1);
+    // These should not have been changed
+    assert_non_null(buf);
+    assert_true(bufsize >= TESTING_BUFSIZE);
+    assert_string_equal(buf, expect);
+
+    assert_int_equal(dcs_eof(stream), 1);
+    free(buf);
+    free(expect);
+}
+
 
 dcs_comp_algo dcs_guess_compression_type(const char *filename);
 void test_stream_guess_algo(void **ctx)
@@ -215,5 +272,6 @@ const struct CMUnitTest suite_stream[] = {
     cmocka_unit_test_teardown(test_stream_readwrite_roundtrip, remove_testfile),
     cmocka_unit_test_teardown(test_stream_bad_read, remove_testfile),
     cmocka_unit_test_teardown(test_stream_getc_ungetc, remove_testfile),
+    cmocka_unit_test_teardown(test_stream_getuntil, remove_testfile),
     cmocka_unit_test(test_stream_guess_algo),
 };

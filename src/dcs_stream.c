@@ -225,6 +225,55 @@ int dcs_ungetc(dcs_stream *stream)
     return -1;
 }
 
+ssize_t
+dcs_getuntil(dcs_stream *stream, char **dest, size_t *size, char delim)
+{
+    if (stream == NULL || !stream->read || dest == NULL || size == NULL) return -1;
+
+    char *out = *dest;
+    size_t outsize = *size;
+    size_t outpos = 0;
+    bool found = false;
+    while (!found && !dcs_eof(stream)) {
+        // Fill buffer if empty
+        if (stream->pos == stream->len) {
+            if (_dcs_fillbuf(stream) != 0) return -1;
+        }
+
+        // Find delimiter, or end of buffer
+        const char *buffer_start = stream->buf + stream->pos;
+        const size_t buffer_len = stream->len - stream->pos;
+        const char *delim_pos = memchr(buffer_start, delim, buffer_len);
+        size_t bytes_to_delim = 0;
+
+        if (delim_pos != NULL) {
+            bytes_to_delim = delim_pos - buffer_start + 1;
+            found = true;
+        } else {
+            bytes_to_delim = buffer_len;
+        }
+
+        // Resize buffer if required
+        while (out == NULL || bytes_to_delim > outsize - outpos) {
+            if (outsize < 64) outsize = 64;
+            else outsize <<= 1;
+
+            out = realloc(out, outsize);
+            if (out == NULL) return -1;
+
+            *dest = out;
+            *size = outsize;
+        }
+
+        memcpy(out + outpos, buffer_start, bytes_to_delim);
+        stream->pos += bytes_to_delim;
+        outpos += bytes_to_delim;
+        out[outpos] = '\0';
+    }
+    *dest = out;
+    *size = outsize;
+    return outpos;
+}
 
 /*******************************************************************************
 *                                   Helpers                                   *
