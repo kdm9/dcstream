@@ -244,6 +244,46 @@ void test_stream_getuntil(void **ctx)
     free(expect);
 }
 
+void test_stream_getuntil_bigline(void **ctx)
+{
+    dcs_stream *stream;
+    ssize_t res = 0;
+    const unsigned char delim = '\n';
+
+    size_t bufsize = TESTING_BUFSIZE * 2;
+    char *buf = calloc(1, bufsize + 1);
+    char *expect = calloc(1, bufsize + 1);
+    assert_non_null(buf);
+    assert_non_null(expect);
+
+    // Make expect contain one massive line
+    for (size_t i = 0; i < bufsize - 2; i++) {
+        expect[i] = '0' + i % 10;
+        expect[i+1] = '\n';
+    }
+
+    // Write test file
+    FILE *fp = fopen(filename, "w");
+    assert_non_null(fp);
+    fputs(expect, fp);
+    fclose(fp);
+
+    stream = dcs_open(filename, "r", DCS_PLAIN);
+    assert_non_null(stream);
+    dcs_setbufsize(stream, TESTING_BUFSIZE);
+
+    res = dcs_getuntil(stream, &buf, &bufsize, delim);
+    assert_int_equal(res, strlen(expect));
+    assert_string_equal(buf, expect);
+    assert_non_null(buf);
+    assert_true(bufsize >= TESTING_BUFSIZE * 2);
+    assert_int_equal(buf[res-1], delim);
+    assert_int_equal(buf[res], 0);
+
+    free(buf);
+    free(expect);
+}
+
 
 dcs_comp_algo dcs_guess_compression_type(const char *filename);
 void test_stream_guess_algo(void **ctx)
@@ -273,5 +313,6 @@ const struct CMUnitTest suite_stream[] = {
     cmocka_unit_test_teardown(test_stream_bad_read, remove_testfile),
     cmocka_unit_test_teardown(test_stream_getc_ungetc, remove_testfile),
     cmocka_unit_test_teardown(test_stream_getuntil, remove_testfile),
+    cmocka_unit_test_teardown(test_stream_getuntil_bigline, remove_testfile),
     cmocka_unit_test(test_stream_guess_algo),
 };
