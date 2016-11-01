@@ -168,7 +168,7 @@ dcs_read(dcs_stream *stream, void *dest, size_t size)
     if (stream == NULL || dest == NULL || ! stream->read) return -1;
 
     size_t read = 0;
-    uint8_t *bdest = dest;
+    unsigned char *bdest = dest;
     while (read < size && dcs_moredata(stream)) {
         size_t tocpy = dcs_size_min(stream->len - stream->pos, size - read);
         memcpy(bdest + read, stream->buf + stream->pos, tocpy);
@@ -186,7 +186,7 @@ dcs_write(dcs_stream *stream, const void *src, size_t size)
 
     size_t wrote = 0;
     int res = 0;
-    const uint8_t *bsrc = src;
+    const unsigned char *bsrc = src;
     while (wrote < size) {
         size_t tocpy = dcs_size_min(stream->cap - stream->pos, size - wrote);
         memcpy(stream->buf + stream->pos, bsrc + wrote, tocpy);
