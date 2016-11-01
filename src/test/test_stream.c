@@ -205,7 +205,7 @@ void test_stream_getuntil(void **ctx)
 {
     dcs_stream *stream;
     ssize_t res = 0;
-    const size_t numlines = 5;
+    const size_t numlines = TESTING_BUFSIZE;
     const unsigned char delim = '\n';
 
     size_t bufsize = TESTING_BUFSIZE;
@@ -231,6 +231,7 @@ void test_stream_getuntil(void **ctx)
         assert_int_equal(buf[res-1], delim);
         assert_int_equal(buf[res], 0);
     }
+
     res = dcs_getuntil(stream, &buf, &bufsize, delim);
     assert_int_equal(res, 0);
     assert_int_equal(dcs_eof(stream), 1);

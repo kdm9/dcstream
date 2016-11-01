@@ -151,6 +151,17 @@ dcs_setbufsize(dcs_stream *stream, size_t size)
 *                               Read and Write                                *
 *******************************************************************************/
 
+// returns <0 on error, 0 on eof, 1 if more data to process
+static inline int
+dcs_moredata(dcs_stream *stream)
+{
+    if (stream == NULL || ! stream->read) return -1;
+    if (!stream->fp_eof && stream->pos == stream->len) {
+        if (_dcs_fillbuf(stream) != 0) return -1;
+    }
+    return dcs_eof(stream) ? 0 : 1;
+}
+
 ssize_t
 dcs_read(dcs_stream *stream, void *dest, size_t size)
 {
@@ -158,10 +169,7 @@ dcs_read(dcs_stream *stream, void *dest, size_t size)
 
     size_t read = 0;
     uint8_t *bdest = dest;
-    while (read < size && ! dcs_eof(stream)) {
-        if (stream->pos == stream->len) {
-            if (_dcs_fillbuf(stream) != 0) return -1;
-        }
+    while (read < size && dcs_moredata(stream)) {
         size_t tocpy = dcs_size_min(stream->len - stream->pos, size - read);
         memcpy(bdest + read, stream->buf + stream->pos, tocpy);
         stream->pos += tocpy;
@@ -200,16 +208,11 @@ int
 dcs_getc(dcs_stream *stream)
 {
     if (stream == NULL || !stream->read) return -1;
-    if (stream->pos == stream->len) {
-        // refill buffer if empty
-        if (_dcs_fillbuf(stream) != 0) return -1;
-    }
-    if (stream->pos < stream->len) {
-        int chr = stream->buf[stream->pos++];
-        stream->prevous_getc = chr;
-        return chr;
-    }
-    return -1;
+    if (dcs_moredata(stream) != 1) return -1;
+
+    int chr = stream->buf[stream->pos++];
+    stream->prevous_getc = chr;
+    return chr;
 }
 
 int
@@ -234,12 +237,7 @@ dcs_getuntil(dcs_stream *stream, char **dest, size_t *size, char delim)
     size_t outsize = *size;
     size_t outpos = 0;
     bool found = false;
-    while (!found && !dcs_eof(stream)) {
-        // Fill buffer if empty
-        if (stream->pos == stream->len) {
-            if (_dcs_fillbuf(stream) != 0) return -1;
-        }
-
+    while (!found && dcs_moredata(stream)) {
         // Find delimiter, or end of buffer
         const char *buffer_start = (char *)stream->buf + stream->pos;
         const size_t buffer_len = stream->len - stream->pos;
