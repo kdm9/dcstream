@@ -72,7 +72,8 @@ _dcs_init(const char *mode)
 }
 
 
-dcs_stream *dcs_open(const char *file, const char *mode, dcs_comp_algo algo)
+dcs_stream *
+dcs_open(const char *file, const char *mode, dcs_comp_algo algo)
 {
     if (file == NULL || mode == NULL) return NULL;
 
@@ -93,15 +94,8 @@ dcs_stream *dcs_open(const char *file, const char *mode, dcs_comp_algo algo)
 }
 
 
-/* Open @file in mode @mode
- *
- * @file Filename to open.
- * @mode File mode. Must be "r" or "w". Any trailing characters ignored, but are
- *       passed directly to the underlying IO/compression library's `open`.
- * @algo Compression algo. If DCS_UNKNOWN is given, no detection is attempted
- *       and DCS_PLAIN is assumed.
- */
-dcs_stream *dcs_dopen(int fd, const char *mode, dcs_comp_algo algo)
+dcs_stream *
+dcs_dopen(int fd, const char *mode, dcs_comp_algo algo)
 {
     if (mode == NULL || algo == DCS_UNKNOWN) return NULL;
 
@@ -120,7 +114,8 @@ dcs_stream *dcs_dopen(int fd, const char *mode, dcs_comp_algo algo)
 
 /* Close @dcs, destroying all data strucutres
  */
-int _dcs_close(dcs_stream *stream)
+int
+_dcs_close(dcs_stream *stream)
 {
     if (stream == NULL) return -1;
 
@@ -134,7 +129,8 @@ int _dcs_close(dcs_stream *stream)
     return res;
 }
 
-int dcs_setbufsize(dcs_stream *stream, size_t size)
+int
+dcs_setbufsize(dcs_stream *stream, size_t size)
 {
     if (stream == NULL || size == 0) return -1;
 
@@ -155,7 +151,8 @@ int dcs_setbufsize(dcs_stream *stream, size_t size)
 *                               Read and Write                                *
 *******************************************************************************/
 
-ssize_t dcs_read(dcs_stream *stream, void *dest, size_t size)
+ssize_t
+dcs_read(dcs_stream *stream, void *dest, size_t size)
 {
     if (stream == NULL || dest == NULL || ! stream->read) return -1;
 
@@ -174,14 +171,15 @@ ssize_t dcs_read(dcs_stream *stream, void *dest, size_t size)
     return read;
 }
 
-ssize_t dcs_write(dcs_stream *stream, const void *src, size_t size)
+ssize_t
+dcs_write(dcs_stream *stream, const void *src, size_t size)
 {
     if (stream == NULL || src == NULL || stream->read) return -1;
 
     size_t wrote = 0;
     int res = 0;
     const uint8_t *bsrc = src;
-    for (; wrote < size; ) {
+    while (wrote < size) {
         size_t tocpy = dcs_size_min(stream->cap - stream->pos, size - wrote);
         memcpy(stream->buf + stream->pos, bsrc + wrote, tocpy);
         stream->pos += tocpy;
@@ -198,7 +196,8 @@ ssize_t dcs_write(dcs_stream *stream, const void *src, size_t size)
 }
 
 
-int dcs_getc(dcs_stream *stream)
+int
+dcs_getc(dcs_stream *stream)
 {
     if (stream == NULL || !stream->read) return -1;
     if (stream->pos == stream->len) {
@@ -213,7 +212,8 @@ int dcs_getc(dcs_stream *stream)
     return -1;
 }
 
-int dcs_ungetc(dcs_stream *stream)
+int
+dcs_ungetc(dcs_stream *stream)
 {
     if (stream == NULL || !stream->read) return -1;
     if (stream->prevous_getc < 0) return -1;

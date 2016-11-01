@@ -7,7 +7,7 @@ else
 CFLAGS ?= -O3
 endif
 
-CFLAGS += -std=gnu11 -Wall -iquote src
+CFLAGS += -std=gnu11 -Wall -Wpedantic -iquote src
 LIBS    = -lm $(shell pkg-config --libs libzstd zlib) -lbz2
 
 SOURCES = dcs_compr.c dcs_stream.c

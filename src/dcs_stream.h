@@ -65,7 +65,8 @@ dcs_stream *dcs_dopen(int fd, const char *mode, dcs_comp_algo algo);
 /* Close `stream`, destroying all data strucutres
  */
 int _dcs_close(dcs_stream *stream);
-#define dcs_close(st) ({int res=0; if (st != NULL){res = _dcs_close(st);} st = NULL; res;})
+#define dcs_close(st) __extension__ ({int res=0; \
+        if (st != NULL){res = _dcs_close(st);} st = NULL; res;})
 
 /* Sets the buffer size of `stream` to `size`.
  *
@@ -104,7 +105,8 @@ ssize_t dcs_write(dcs_stream *stream, const void *src, size_t size);
 int dcs_getc(dcs_stream *stream);
 int dcs_ungetc(dcs_stream *stream);
 
-ssize_t dcs_getuntil(dcs_stream *stream, unsigned char *dest, size_t size, unsigned char delim);
+ssize_t dcs_getuntil(dcs_stream *stream, char **dest, size_t *size,
+                     char delim);
 ssize_t dcs_puts(dcs_stream *stream, const char *str);
 
 int dcs_flush(dcs_stream *stream);

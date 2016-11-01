@@ -21,7 +21,7 @@ int dcs_compr_read(dcs_compr *compr, unsigned char *bytes, size_t *len, size_t c
 int dcs_compr_write(dcs_compr *compr, unsigned char *bytes, size_t len);
 int dcs_compr_flush(dcs_compr *compr);
 int _dcs_compr_close(dcs_compr *compr);
-#define dcs_compr_close(compr) ({int res=0;                \
+#define dcs_compr_close(compr) __extension__ ({int res=0;                \
         if (compr != NULL){res = _dcs_compr_close(compr);} \
         compr = NULL; res;})
 

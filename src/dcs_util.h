@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#define dcs_free(ptr) ({if(ptr) free(ptr); ptr=NULL;})
+#define dcs_free(ptr) __extension__ ({if(ptr) free(ptr); ptr=NULL;})
 
 static inline size_t dcs_size_min(size_t a, size_t b) { return a < b ? a : b; }
 
