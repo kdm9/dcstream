@@ -7,7 +7,7 @@ else
 CFLAGS ?= -O3
 endif
 
-CFLAGS += -std=gnu11 -Wall -Wpedantic -iquote src
+CFLAGS += -std=gnu11 -Wall -Wpedantic -iquote src $(shell pkg-config --cflags libzstd zlib)
 LIBS    = -lm $(shell pkg-config --libs libzstd zlib) -lbz2
 
 SOURCES = dcs_compr.c dcs_stream.c
@@ -33,7 +33,8 @@ libdcstream.so: libdcstream.so.$(SOVERSION)
 	ln -sf $< $@
 
 run_tests: src/test/main.c $(SRCS) $(wildcard src/test/test_*.c)
-	$(CC) $(CFLAGS) --coverage  -o $@ $< $(SRCS) -lcmocka  $(LIBS)
+	$(CC) $(CFLAGS) $(shell pkg-config --cflags cmocka) --coverage  -o $@ $< $(SRCS) $(shell pkg-config --libs cmocka) $(LIBS)
+
 
 .PHONY: test
 test: run_tests
