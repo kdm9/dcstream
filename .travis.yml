@@ -36,4 +36,4 @@ before_install:
 
 script:
   - make clean test all
-  - sudo make install PREFIX=$PWD/target
+  - make install PREFIX=$HOME/opt
