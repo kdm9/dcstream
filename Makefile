@@ -2,9 +2,9 @@ prefix := /usr/local
 PREFIX := $(prefix)
 
 ifdef DEBUG
-CFLAGS ?= -g -fsanitize=address -Wpedantic
+CFLAGS += -g -Wpedantic
 else
-CFLAGS ?= -O3
+CFLAGS += -O3
 endif
 
 CFLAGS += -std=gnu11 -Wall -Wpedantic -iquote src $(shell pkg-config --cflags libzstd zlib)
@@ -83,6 +83,6 @@ install: $(INSTALLED_LIBS)
 
 .PHONY: clean
 clean:
-	rm -f *.o *.lo libdcstream.* run_tests dcstream.pc *.gcda
+	rm -f *.o *.lo libdcstream.* run_tests dcstream.pc *.gcda *.gcno
 	rm -rf docs/html $(HTML_COVER_DIR)
 
