@@ -35,16 +35,21 @@ libdcstream.so: libdcstream.so.$(SOVERSION)
 run_tests: src/test/main.c $(SRCS) $(wildcard src/test/test_*.c)
 	$(CC) $(CFLAGS) $(shell pkg-config --cflags cmocka) --coverage  -o $@ $< $(SRCS) $(shell pkg-config --libs cmocka) $(LIBS)
 
+dcscat: src/test/dcscat.c
+	$(CC) $(CFLAGS) --coverage  -o $@ $< $(SRCS) $(LIBS)
+
 
 .PHONY: test
-test: run_tests
-	@./run_tests
+test: run_tests dcscat src/test/stream_tests.sh
+	bash src/test/stream_tests.sh
+	./run_tests
 
 HTML_COVER_DIR=html_cov
 .PHONY: testcov
 testcov: run_tests
 	test -d "$(HTML_COVER_DIR)" || mkdir -p "$(HTML_COVER_DIR)"
 	lcov --directory . --zerocounters
+	./run_tests
 	./run_tests
 	lcov --capture --no-external --directory . \
 		--base-directory src --output-file "$(HTML_COVER_DIR)/lcov.tmp"
@@ -83,6 +88,6 @@ install: $(INSTALLED_LIBS)
 
 .PHONY: clean
 clean:
-	rm -f *.o *.lo libdcstream.* run_tests dcstream.pc *.gcda *.gcno
+	rm -f *.o *.lo libdcstream.* run_tests dcscat dcstream.pc *.gcda *.gcno
 	rm -rf docs/html $(HTML_COVER_DIR)
 
