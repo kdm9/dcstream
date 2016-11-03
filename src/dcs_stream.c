@@ -119,7 +119,7 @@ _dcs_close(dcs_stream *stream)
 {
     if (stream == NULL) return -1;
 
-    if (stream->len > 0) {
+    if (!stream->read && stream->pos > 0) {
         _dcs_writebuf(stream);
     }
     int res = dcs_compr_close(stream->compr);
@@ -146,6 +146,21 @@ dcs_setbufsize(dcs_stream *stream, size_t size)
 
     return 0;
 }
+
+int
+dcs_flush(dcs_stream *stream)
+{
+    if (stream == NULL || stream->read) return -1;
+
+    if (stream->pos == 0) return 0;
+
+    int res = dcs_compr_write(stream->compr, stream->buf, stream->len);
+    res |= dcs_compr_flush(stream->compr);
+    stream->len = 0;
+    stream->pos = 0;
+    return res;
+}
+
 
 /*******************************************************************************
 *                               Read and Write                                *
@@ -193,7 +208,7 @@ dcs_write(dcs_stream *stream, const void *src, size_t size)
         stream->pos += tocpy;
         stream->len = stream->pos;
         wrote += tocpy;
-        if (stream->pos == stream->len) {
+        if (stream->pos == stream->cap) {
             res = _dcs_writebuf(stream);
             if (res != 0) {
                 return -1;
@@ -272,6 +287,7 @@ dcs_getuntil(dcs_stream *stream, char **dest, size_t *size, char delim)
     *size = outsize;
     return outpos;
 }
+
 
 /*******************************************************************************
 *                                   Helpers                                   *

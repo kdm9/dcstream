@@ -5,6 +5,7 @@
 #include <setjmp.h>
 #include <error.h>
 #include <errno.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -246,6 +247,8 @@ void test_stream_getuntil(void **ctx)
     assert_string_equal(buf, expect);
 
     assert_int_equal(dcs_eof(stream), 1);
+    assert_int_equal(dcs_close(stream), 0);
+    assert_null(stream);
     free(buf);
     free(expect);
 }
@@ -272,7 +275,7 @@ void test_stream_getuntil_bigline(void **ctx)
 
         // Write test file
         fflush(fp);
-        truncate(filename, 0);
+        assert_int_equal(truncate(filename, 0), 0);
         rewind(fp);
         assert_true(fputs(expect, fp) > 0);
         fflush(fp);
@@ -321,11 +324,66 @@ void test_stream_guess_algo(void **ctx)
     }
 }
 
+void test_stream_flush(void **ctx)
+{
+    const dcs_comp_algo algos[] = {DCS_PLAIN, DCS_GZIP};
+    const size_t nalgos = sizeof(algos) / sizeof(*algos);
+
+    for (size_t algoidx = 0; algoidx < nalgos; algoidx++) {
+        dcs_comp_algo algo = algos[algoidx];
+        const char string[] = "String to be flushed\n";
+        char got[100] = "";
+        const size_t length = strlen(string);
+
+
+        /***********
+        *  Write  *
+        ***********/
+        // Open stream, check struct members initialised
+        dcs_stream *wstream = dcs_open(filename, "w", algo);
+        assert_non_null(wstream);
+
+        // resize buffer, check that worked
+        assert_int_equal(dcs_setbufsize(wstream, TESTING_BUFSIZE), 0);
+
+        // Write buffer
+        assert_int_equal(dcs_write(wstream, string, length), length);
+        assert_int_equal(wstream->pos, length);
+
+        // Flush buffer
+        assert_int_equal(dcs_flush(wstream), 0);
+        assert_non_null(wstream);
+        assert_int_equal(wstream->len, 0);
+        assert_int_equal(wstream->pos, 0);
+
+        /**********
+        *  Read  *
+        **********/
+        // Open file for reading, check struct
+        dcs_stream *rstream = dcs_open(filename, "r", algo);
+        assert_non_null(rstream);
+
+        // Get string
+        assert_int_equal(dcs_read(rstream, got, length), length);
+        assert_int_equal(strlen(got), length);
+        assert_string_equal(got, string);
+
+        assert_int_equal(dcs_close(wstream), 0);
+        assert_null(wstream);
+        if (dcs_close(rstream) != 0) {
+            puts(strerror(errno));
+            assert_true(false);
+        }
+        assert_null(rstream);
+    }
+}
+
 const struct CMUnitTest suite_stream[] = {
     cmocka_unit_test_teardown(test_stream_readwrite_roundtrip, remove_testfile),
     cmocka_unit_test_teardown(test_stream_bad_read, remove_testfile),
     cmocka_unit_test_teardown(test_stream_getc_ungetc, remove_testfile),
     cmocka_unit_test_teardown(test_stream_getuntil, remove_testfile),
     cmocka_unit_test_teardown(test_stream_getuntil_bigline, remove_testfile),
+    cmocka_unit_test_teardown(test_stream_flush, remove_testfile),
     cmocka_unit_test(test_stream_guess_algo),
 };
