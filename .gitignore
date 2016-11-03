@@ -8,6 +8,7 @@ lib*.la
 lib*.so*
 
 run_tests
+dcscat
 
 docs/html/
 html_cov/
